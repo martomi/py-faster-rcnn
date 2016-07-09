@@ -38,6 +38,12 @@ case $DATASET in
     PT_DIR="coco"
     ITERS=490000
     ;;
+  mathnet)
+    TRAIN_IMDB="mathnet_2016_trainval"
+    TEST_IMDB="mathnet_2016_test"
+    PT_DIR="mathnet"
+    ITERS=70672
+    ;;
   *)
     echo "No dataset given"
     exit

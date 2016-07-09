@@ -18,7 +18,6 @@ def _vis_proposals(im, dets, thresh=0.5):
         return
 
     class_name = 'obj'
-    im = im[:, :, (2, 1, 0)]
     fig, ax = plt.subplots(figsize=(12, 12))
     ax.imshow(im, aspect='equal')
     for i in inds:
@@ -55,8 +54,7 @@ def _get_image_blob(im):
         im_scale_factors (list): list of image scales (relative to im) used
             in the image pyramid
     """
-    im_orig = im.astype(np.float32, copy=True)
-    im_orig -= cfg.PIXEL_MEANS
+    im_orig = im.astype(np.uint8, copy=True)
 
     im_shape = im_orig.shape
     im_size_min = np.min(im_shape[0:2])
@@ -102,7 +100,7 @@ def imdb_proposals(net, imdb):
     _t = Timer()
     imdb_boxes = [[] for _ in xrange(imdb.num_images)]
     for i in xrange(imdb.num_images):
-        im = cv2.imread(imdb.image_path_at(i))
+        im = cv2.imread(imdb.image_path_at(i), cv2.IMREAD_GRAYSCALE)
         _t.tic()
         imdb_boxes[i], scores = im_proposals(net, im)
         _t.toc()

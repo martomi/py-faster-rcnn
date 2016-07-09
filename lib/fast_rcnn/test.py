@@ -30,8 +30,7 @@ def _get_image_blob(im):
         im_scale_factors (list): list of image scales (relative to im) used
             in the image pyramid
     """
-    im_orig = im.astype(np.float32, copy=True)
-    im_orig -= cfg.PIXEL_MEANS
+    im_orig = im.astype(np.uint8, copy=True)
 
     im_shape = im_orig.shape
     im_size_min = np.min(im_shape[0:2])
@@ -183,24 +182,36 @@ def im_detect(net, im, boxes=None):
 
     return scores, pred_boxes
 
-def vis_detections(im, class_name, dets, thresh=0.3):
+def vis_detections(im, imdb, all_boxes, imIndex, thresh=0.3):
     """Visual debugging of detections."""
     import matplotlib.pyplot as plt
-    im = im[:, :, (2, 1, 0)]
-    for i in xrange(np.minimum(10, dets.shape[0])):
-        bbox = dets[i, :4]
-        score = dets[i, -1]
-        if score > thresh:
-            plt.cla()
-            plt.imshow(im)
-            plt.gca().add_patch(
+    #im = im[:, :, (2, 1, 0)]
+    im = 255 - im
+    plt.cla()
+    plt.imshow(im, cmap='Greys_r')
+
+    for j in xrange(1, imdb.num_classes):
+        dets = all_boxes[j][imIndex]
+        for i in xrange(np.minimum(10, dets.shape[0])):
+            bbox = dets[i, :4]
+            score = dets[i, -1]
+            if score > thresh:
+                plt.gca().add_patch(
                 plt.Rectangle((bbox[0], bbox[1]),
-                              bbox[2] - bbox[0],
-                              bbox[3] - bbox[1], fill=False,
-                              edgecolor='g', linewidth=3)
+                    bbox[2] - bbox[0],
+                    bbox[3] - bbox[1], fill=False,
+                    edgecolor='g', linewidth=1.5)
                 )
-            plt.title('{}  {:.3f}'.format(class_name, score))
-            plt.show()
+                plt.gca().text(bbox[0], bbox[1] - 2,
+                    '{:s} {:.3f}'.format(imdb.classes[j], score),
+                    bbox=dict(facecolor='blue', alpha=0.3),
+                    fontsize=14, color='white')
+            
+    plt.title('Deetction')
+    figname = 'detection' + str(imIndex) + '.jpg'
+    #plt.savefig(figname, bbox_inches='tight', figsize=(80, 16))
+    plt.show()
+
 
 def apply_nms(all_boxes, thresh):
     """Apply non-maximum suppression to all predicted boxes output by the
@@ -253,7 +264,7 @@ def test_net(net, imdb, max_per_image=100, thresh=0.05, vis=False):
             # ground truth.
             box_proposals = roidb[i]['boxes'][roidb[i]['gt_classes'] == 0]
 
-        im = cv2.imread(imdb.image_path_at(i))
+        im = cv2.imread(imdb.image_path_at(i), cv2.IMREAD_GRAYSCALE)
         _t['im_detect'].tic()
         scores, boxes = im_detect(net, im, box_proposals)
         _t['im_detect'].toc()
@@ -268,9 +279,10 @@ def test_net(net, imdb, max_per_image=100, thresh=0.05, vis=False):
                 .astype(np.float32, copy=False)
             keep = nms(cls_dets, cfg.TEST.NMS)
             cls_dets = cls_dets[keep, :]
-            if vis:
-                vis_detections(im, imdb.classes[j], cls_dets)
             all_boxes[j][i] = cls_dets
+
+        if vis:
+            vis_detections(im, imdb, all_boxes, i)
 
         # Limit to max_per_image detections *over all classes*
         if max_per_image > 0:
