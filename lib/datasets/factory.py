@@ -34,7 +34,7 @@ for year in ['2015']:
 
 # Set up mathnet_2016_<split>
 for year in ['2016']:
-    for split in ['trainval', 'test', 'test2014']:
+    for split in ['trainval', 'test']:
         name = 'mathnet_{}_{}'.format(year, split)
         __sets[name] = (lambda split=split, year=year: mathnet(split, year))
 

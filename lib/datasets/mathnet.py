@@ -66,7 +66,7 @@ class mathnet(imdb):
         """
         Construct an image path from the image's "index" identifier.
         """
-        image_path = os.path.join(self._data_path, 'PBMImages',
+        image_path = os.path.join(self._data_path, 'Images',
                                 'image' + index + self._image_ext)
         assert os.path.exists(image_path), \
                 'Path does not exist: {}'.format(image_path)
@@ -182,9 +182,7 @@ class mathnet(imdb):
         Load image and bounding boxes info from XML file in the PASCAL VOC
         format.
         """
-        if(self._image_set != "test2014"): 
-            index = int(index) % 8834
-	index = str(index).zfill(5)
+        index = str(index).zfill(5)
         filename = os.path.join(self._data_path, 'Annotations', index + '.xml')
         tree = ET.parse(filename)
         objs = tree.findall('object')
